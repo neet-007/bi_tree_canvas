@@ -1,6 +1,6 @@
 import { BST, Node } from "../types";
 
-function newBST(arr?: number[] = undefined): BST {
+export function newBST(arr?: number[] = undefined): BST {
     if (arr !== undefined) {
         const nodeArr = buildTree(arr);
         return {
@@ -28,10 +28,11 @@ function buildTree(arr: number[]): Node[] {
     return ret;
 }
 
-function Insert(bst: BST, val: number) {
+export function insert(bst: BST, val: number) {
     let parent = bst.root;
     let curr = bst.root;
 
+    console.log("val: ", val);
     while (curr !== -1) {
         if (bst.arr[curr].val > val) {
             parent = curr;
@@ -40,6 +41,18 @@ function Insert(bst: BST, val: number) {
         }
         parent = curr;
         curr = bst.arr[curr].right;
+    }
+
+    if (parent === -1) {
+        bst.arr.push({
+            val,
+            parent,
+            left: -1,
+            right: -1
+        } as Node);
+        bst.root = 0;
+
+        return
     }
 
     if (bst.arr[parent].val > val) {
@@ -56,12 +69,13 @@ function Insert(bst: BST, val: number) {
     } as Node);
 }
 
-function remove(bst: BST, val: number) {
+export function remove(bst: BST, val: number) {
     const index = find(bst, val);
     if (index === -1) {
         return
     }
 
+    console.log("val: ", val);
     const curr = bst.arr[index];
 
     if (curr.left === -1 && curr.right === -1) {
@@ -146,7 +160,7 @@ function remove(bst: BST, val: number) {
     reAdjust(bst, index);
 }
 
-function find(bst: BST, val: number): number {
+export function find(bst: BST, val: number): number {
     let curr = bst.root;
 
     while (curr !== -1) {
@@ -193,7 +207,7 @@ function successor(arr: Node[], index: number): number {
     return curr
 }
 
-function traverse(arr: Node[], index: number) {
+export function traverse(arr: Node[], index: number) {
     if (arr[index].left !== -1) {
         traverse(arr, arr[index].left)
     }
@@ -202,65 +216,3 @@ function traverse(arr: Node[], index: number) {
         traverse(arr, arr[index].right)
     }
 }
-
-const arr: Node[] = [
-    {
-        val: 5,
-        parent: -1,
-        left: 1,
-        right: 2
-    },
-    {
-        val: 3,
-        parent: 0,
-        left: 3,
-        right: 4
-    },
-    {
-        val: 7,
-        parent: 0,
-        left: 5,
-        right: -1
-    },
-    {
-        val: 2,
-        parent: 1,
-        left: -1,
-        right: -1
-    },
-    {
-        val: 4,
-        parent: 1,
-        left: -1,
-        right: -1
-    },
-    {
-        val: 6,
-        parent: 2,
-        left: -1,
-        right: -1
-    },
-]
-
-const bst = {
-    arr: arr,
-    root: 0,
-} as BST;
-
-console.log(bst.arr);
-traverse(bst.arr, bst.root);
-Insert(bst, 10);
-Insert(bst, 2);
-Insert(bst, 8);
-remove(bst, 4);
-remove(bst, 3);
-Insert(bst, 4);
-remove(bst, 7);
-Insert(bst, 9);
-Insert(bst, 1);
-remove(bst, 7);
-remove(bst, 5);
-console.log(bst.arr);
-console.log(bst.root);
-traverse(bst.arr, bst.root);
-
