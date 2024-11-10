@@ -5,3 +5,8 @@ export type Node = {
   right: number;
   // needs more fields
 }
+
+export type BST = {
+  arr: Node[];
+  root: number;
+}
