@@ -35,38 +35,6 @@ const Input: React.FC<ComponentProps<"form"> & InputProps> = ({ name, handler, a
 const NODE_SIZE = 10;
 const ANGLE = 70 * (Math.PI / 180);
 const LINE_HYPOTENUSE = 150;
-const BASE_X = 50;
-const BASE_Y = 50;
-const BASE_OFFSET = Math.sqrt(Math.pow(NODE_SIZE, 2) / 4);
-
-function sideInSAS(b: number, c: number, aAngle: number): number {
-  const angleInRadians = aAngle * (Math.PI / 180);
-  return Math.sqrt((Math.pow(b, 2) + Math.pow(c, 2) - (2 * b * c * Math.cos(angleInRadians))));
-}
-
-function lawOfSines(x: number, xAngle: number, y?: number, yAngle?: number): number {
-  const yAngleRadians = yAngle !== undefined ? yAngle * (Math.PI / 180) : undefined;
-
-  if ((y === undefined && yAngle === undefined) || (y !== undefined && yAngle !== undefined)) {
-    return -1;
-  }
-
-  if (yAngleRadians !== undefined) {
-    return (x * Math.sin(yAngleRadians)) / Math.sin(xAngle);
-  }
-
-  if (y !== undefined) {
-    const result = Math.asin((Math.sin(xAngle) * y) / x);
-    return result * (180 / Math.PI);
-  }
-
-  return -1;
-}
-
-//a2 = b2 + c2 − 2bc cosA
-// for angles sin x / x = sin y / y
-// sides formula for 45 ange
-// x = sqrt(pow(r, 2) / 4)
 
 function App() {
   const [tree, setTree] = useState<BST>({ arr: [], root: -1 } as BST)
