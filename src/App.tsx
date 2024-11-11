@@ -33,19 +33,15 @@ const Input: React.FC<ComponentProps<"form"> & InputProps> = ({ name, handler, a
 }
 
 const NODE_SIZE = 10;
-const ANGLE = 70 * (Math.PI / 180);
-const LINE_HYPOTENUSE = 150;
+const ANGLE = 30 * (Math.PI / 180);
+const LINE_HYPOTENUSE = 50;
 
 function App() {
   const [tree, setTree] = useState<BST>({ arr: [], root: -1 } as BST)
   const [val, setVal] = useState(-1);
+  const [drawing, setDrawing] = useState(false);
   const [action, setAction] = useState<"add" | "remove" | "none">("none");
   const ref = useRef<HTMLCanvasElement>(null);
-
-  if (tree.root !== -1) {
-    traverse(tree.arr, tree.root);
-  }
-
 
   useEffect(() => {
     if (!ref.current) {
@@ -55,22 +51,22 @@ function App() {
     const width = ref.current.width;
     const height = ref.current.height;
     const context = ref.current.getContext("2d");
-    if (!context) {
+    if (!context || !drawing) {
       return;
     }
-    function draw(centerX: number, centerY: number, angle: number, length: number, context: CanvasRenderingContext2D): [number[], number[]] {
-      console.log("centerx:", centerX)
+
+    function draw(centerX: number, centerY: number, leftAngle: number, rightAngle: number, lengthLeft: number, lengthRight: number, context: CanvasRenderingContext2D): [number[], number[]] {
       context.beginPath();
       context.arc(centerX, centerY, NODE_SIZE, 0, 2 * Math.PI);
       context.fillStyle = "white";
       context.fill();
       context.stroke();
 
-      const offsetX1 = length * Math.sin(angle);
-      const offsetY1 = length * Math.cos(angle);
+      const offsetX1 = lengthRight * Math.sin(rightAngle);
+      const offsetY1 = lengthRight * Math.cos(rightAngle);
 
-      const offsetX2 = length * Math.sin(-angle);
-      const offsetY2 = length * Math.cos(-angle);
+      const offsetX2 = lengthLeft * Math.sin(-leftAngle);
+      const offsetY2 = lengthLeft * Math.cos(-leftAngle);
 
       const path1 = new Path2D();
       path1.moveTo(centerX, centerY);
@@ -88,17 +84,47 @@ function App() {
       ]
     }
 
-    const [right, left] = draw(width / 2, NODE_SIZE, ANGLE, LINE_HYPOTENUSE, context);
+    const queue = [{
+      index: tree.root,
+      centerX: width / 2,
+      centerY: NODE_SIZE,
+      lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.root].leftTreeSize * (20 / 100))),
+      lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.root].rightTreeSize * (20 / 100))),
+      leftAngle: ANGLE + (ANGLE * (tree.arr[tree.root]).leftTreeSize * (15 / 100)),
+      rightAngle: ANGLE + (ANGLE * (tree.arr[tree.root]).rightTreeSize * (15 / 100)),
+    }];
 
-    const [right2, left2] = draw(right[0], right[1], ANGLE, LINE_HYPOTENUSE, context);
-    const [right3, left3] = draw(left[0], left[1], ANGLE, LINE_HYPOTENUSE, context);
-    draw(right2[0], right2[1], ANGLE, LINE_HYPOTENUSE, context);
-    draw(left2[0], left2[1], ANGLE, LINE_HYPOTENUSE, context);
-    draw(right3[0], right3[1], ANGLE, LINE_HYPOTENUSE, context);
-    draw(left3[0], left3[1], ANGLE, LINE_HYPOTENUSE, context);
+    context.clearRect(0, 0, width, height);
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      const [right, left] = draw(curr.centerX, curr.centerY, curr.leftAngle, curr.rightAngle, curr.lengthLeft, curr.lengthRight, context);
+      if (tree.arr[curr.index].left !== -1) {
+        queue.push({
+          index: tree.arr[curr.index].left,
+          centerX: left[0],
+          centerY: left[1],
+          lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
+          lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
+          leftAngle: ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
+          rightAngle: ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
+        });
+      }
+      if (tree.arr[curr.index].right !== -1) {
+        queue.push({
+          index: tree.arr[curr.index].right,
+          centerX: right[0],
+          centerY: right[1],
+          lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
+          lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
+          leftAngle: ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
+          rightAngle: ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
+        });
+      }
+    }
 
+    setDrawing(false);
     () => context.clearRect(0, 0, width, height);
-  }, [])
+  }, [drawing])
 
   useEffect(() => {
     if (action === "none") {
@@ -114,6 +140,7 @@ function App() {
           return new_
         })
 
+        setDrawing(true);
         return;
       }
 
@@ -125,6 +152,7 @@ function App() {
           return new_
         });
 
+        setDrawing(true);
         return;
       }
 

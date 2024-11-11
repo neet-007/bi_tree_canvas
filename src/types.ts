@@ -3,6 +3,8 @@ export type Node = {
   parent: number;
   left: number;
   right: number;
+  leftTreeSize: number;
+  rightTreeSize: number;
   // needs more fields
 }
 

@@ -32,7 +32,6 @@ export function insert(bst: BST, val: number) {
     let parent = bst.root;
     let curr = bst.root;
 
-    console.log("val: ", val);
     while (curr !== -1) {
         if (bst.arr[curr].val > val) {
             parent = curr;
@@ -48,7 +47,9 @@ export function insert(bst: BST, val: number) {
             val,
             parent,
             left: -1,
-            right: -1
+            right: -1,
+            leftTreeSize: 0,
+            rightTreeSize: 0,
         } as Node);
         bst.root = 0;
 
@@ -65,8 +66,12 @@ export function insert(bst: BST, val: number) {
         val,
         parent,
         left: -1,
-        right: -1
+        right: -1,
+        leftTreeSize: 0,
+        rightTreeSize: 0
     } as Node);
+
+    adjustParentsTreeSize(bst, bst.arr.length - 1, "add");
 }
 
 export function remove(bst: BST, val: number) {
@@ -75,15 +80,16 @@ export function remove(bst: BST, val: number) {
         return
     }
 
-    console.log("val: ", val);
     const curr = bst.arr[index];
 
     if (curr.left === -1 && curr.right === -1) {
         if (curr.parent !== -1) {
             if (bst.arr[curr.parent].left === index) {
                 bst.arr[curr.parent].left = -1;
+                adjustParentsTreeSize(bst, index, "remove");
             } else {
                 bst.arr[curr.parent].right = -1;
+                adjustParentsTreeSize(bst, index, "remove");
             }
         }
 
@@ -107,9 +113,14 @@ export function remove(bst: BST, val: number) {
         if (curr.parent !== -1) {
             if (bst.arr[curr.parent].left === index) {
                 bst.arr[curr.parent].left = next;
+                adjustParentsTreeSize(bst, index, "remove");
             } else {
                 bst.arr[curr.parent].right = next;
+                adjustParentsTreeSize(bst, index, "remove");
             }
+        } else {
+            bst.arr[next].leftTreeSize = curr.leftTreeSize;
+            bst.arr[next].rightTreeSize = curr.rightTreeSize;
         }
 
         if (bst.root === index) {
@@ -138,9 +149,14 @@ export function remove(bst: BST, val: number) {
     if (curr.parent !== -1) {
         if (bst.arr[curr.parent].left == index) {
             bst.arr[curr.parent].left = next;
+            adjustParentsTreeSize(bst, index, "remove");
         } else {
             bst.arr[curr.parent].right = next;
+            adjustParentsTreeSize(bst, index, "remove");
         }
+    } else {
+        bst.arr[next].leftTreeSize = curr.leftTreeSize;
+        bst.arr[next].rightTreeSize = --curr.rightTreeSize;
     }
     nextNode.left = curr.left;
     if (curr.left !== -1) {
@@ -177,6 +193,47 @@ export function find(bst: BST, val: number): number {
     return -1;
 }
 
+function adjustParentsTreeSize(bst: BST, index: number, mode: "add" | "remove") {
+    let parent = bst.arr[index].parent;
+    let dir = "";
+
+    if (parent !== -1) {
+        if (bst.arr[parent].left === index) {
+            dir = "l";
+        } else {
+            dir = "r";
+        }
+    } else {
+        return;
+    }
+
+    while (parent !== -1) {
+        if (dir === "l") {
+            if (mode === "add") {
+                bst.arr[parent].leftTreeSize++;
+            } else {
+                bst.arr[parent].leftTreeSize--;
+            }
+        } else {
+            if (mode === "add") {
+                bst.arr[parent].rightTreeSize++;
+            } else {
+                bst.arr[parent].rightTreeSize--;
+            }
+        }
+
+        parent = bst.arr[parent].parent;
+        if (parent !== -1) {
+            if (bst.arr[parent].left === parent) {
+                dir = "l";
+            } else {
+                dir = "r";
+            }
+        }
+
+    }
+}
+
 function reAdjust(bst: BST, index: number) {
     for (let i = 0; i < bst.arr.length; i++) {
         if (bst.arr[i].parent >= index) {
@@ -211,7 +268,7 @@ export function traverse(arr: Node[], index: number) {
     if (arr[index].left !== -1) {
         traverse(arr, arr[index].left)
     }
-    console.log(arr[index].val);
+    console.log(arr[index]);
     if (arr[index].right !== -1) {
         traverse(arr, arr[index].right)
     }
