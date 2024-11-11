@@ -32,6 +32,41 @@ const Input: React.FC<ComponentProps<"form"> & InputProps> = ({ name, handler, a
   );
 }
 
+const NODE_SIZE = 10;
+const ANGLE = 70 * (Math.PI / 180);
+const LINE_HYPOTENUSE = 150;
+const BASE_X = 50;
+const BASE_Y = 50;
+const BASE_OFFSET = Math.sqrt(Math.pow(NODE_SIZE, 2) / 4);
+
+function sideInSAS(b: number, c: number, aAngle: number): number {
+  const angleInRadians = aAngle * (Math.PI / 180);
+  return Math.sqrt((Math.pow(b, 2) + Math.pow(c, 2) - (2 * b * c * Math.cos(angleInRadians))));
+}
+
+function lawOfSines(x: number, xAngle: number, y?: number, yAngle?: number): number {
+  const yAngleRadians = yAngle !== undefined ? yAngle * (Math.PI / 180) : undefined;
+
+  if ((y === undefined && yAngle === undefined) || (y !== undefined && yAngle !== undefined)) {
+    return -1;
+  }
+
+  if (yAngleRadians !== undefined) {
+    return (x * Math.sin(yAngleRadians)) / Math.sin(xAngle);
+  }
+
+  if (y !== undefined) {
+    const result = Math.asin((Math.sin(xAngle) * y) / x);
+    return result * (180 / Math.PI);
+  }
+
+  return -1;
+}
+
+//a2 = b2 + c2 − 2bc cosA
+// for angles sin x / x = sin y / y
+// sides formula for 45 ange
+// x = sqrt(pow(r, 2) / 4)
 
 function App() {
   const [tree, setTree] = useState<BST>({ arr: [], root: -1 } as BST)
@@ -42,6 +77,60 @@ function App() {
   if (tree.root !== -1) {
     traverse(tree.arr, tree.root);
   }
+
+
+  useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+
+    const width = ref.current.width;
+    const height = ref.current.height;
+    const context = ref.current.getContext("2d");
+    if (!context) {
+      return;
+    }
+    function draw(centerX: number, centerY: number, angle: number, length: number, context: CanvasRenderingContext2D): [number[], number[]] {
+      console.log("centerx:", centerX)
+      context.beginPath();
+      context.arc(centerX, centerY, NODE_SIZE, 0, 2 * Math.PI);
+      context.fillStyle = "white";
+      context.fill();
+      context.stroke();
+
+      const offsetX1 = length * Math.sin(angle);
+      const offsetY1 = length * Math.cos(angle);
+
+      const offsetX2 = length * Math.sin(-angle);
+      const offsetY2 = length * Math.cos(-angle);
+
+      const path1 = new Path2D();
+      path1.moveTo(centerX, centerY);
+      path1.lineTo(centerX + offsetX1, centerY + offsetY1);
+      context.stroke(path1);
+
+      const path2 = new Path2D();
+      path2.moveTo(centerX, centerY);
+      path2.lineTo(centerX + offsetX2, centerY + offsetY2);
+      context.stroke(path2);
+
+      return [
+        [centerX + offsetX1, centerY + offsetY1],
+        [centerX + offsetX2, centerY + offsetY2]
+      ]
+    }
+
+    const [right, left] = draw(width / 2, NODE_SIZE, ANGLE, LINE_HYPOTENUSE, context);
+
+    const [right2, left2] = draw(right[0], right[1], ANGLE, LINE_HYPOTENUSE, context);
+    const [right3, left3] = draw(left[0], left[1], ANGLE, LINE_HYPOTENUSE, context);
+    draw(right2[0], right2[1], ANGLE, LINE_HYPOTENUSE, context);
+    draw(left2[0], left2[1], ANGLE, LINE_HYPOTENUSE, context);
+    draw(right3[0], right3[1], ANGLE, LINE_HYPOTENUSE, context);
+    draw(left3[0], left3[1], ANGLE, LINE_HYPOTENUSE, context);
+
+    () => context.clearRect(0, 0, width, height);
+  }, [])
 
   useEffect(() => {
     if (action === "none") {
@@ -85,7 +174,7 @@ function App() {
   }
   return (
     <>
-      <canvas width="500" height="500" style={{ backgroundColor: "white" }} ref={ref}></canvas>
+      <canvas width="1200" height="500" style={{ backgroundColor: "white" }} ref={ref}></canvas>
       <div>{tree.arr.map((x, i) => (<div key={`${i}{x}`}>{x.val}</div>))}</div>
       <div>
         <Input name='add' handler={addVal} action_={action} treeLength={tree.arr.length} />
