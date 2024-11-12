@@ -32,7 +32,7 @@ const Input: React.FC<ComponentProps<"form"> & InputProps> = ({ name, handler, a
   );
 }
 
-const NODE_SIZE = 10;
+const NODE_SIZE = 15;
 const ANGLE = 30 * (Math.PI / 180);
 const LINE_HYPOTENUSE = 50;
 
@@ -42,6 +42,7 @@ function App() {
   const [drawing, setDrawing] = useState(false);
   const [action, setAction] = useState<"add" | "remove" | "none">("none");
   const ref = useRef<HTMLCanvasElement>(null);
+
 
   useEffect(() => {
     if (!ref.current) {
@@ -55,7 +56,7 @@ function App() {
       return;
     }
 
-    function draw(centerX: number, centerY: number, leftAngle: number, rightAngle: number, lengthLeft: number, lengthRight: number, context: CanvasRenderingContext2D): [number[], number[]] {
+    function draw(centerX: number, centerY: number, leftAngle: number, rightAngle: number, lengthLeft: number, lengthRight: number, val: number, context: CanvasRenderingContext2D): [number[], number[]] {
       context.beginPath();
       context.arc(centerX, centerY, NODE_SIZE, 0, 2 * Math.PI);
       context.fillStyle = "white";
@@ -78,6 +79,13 @@ function App() {
       path2.lineTo(centerX + offsetX2, centerY + offsetY2);
       context.stroke(path2);
 
+      context.font = "20px serif";
+      const metrics = context.measureText("1");
+      const textHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+      const width = (metrics.width / 2) + (`${val}`.length) * 3;
+      const height = (textHeight / 2) - (`${val}`.length) * 3;
+      context.strokeText(`${val}`, centerX - width, centerY + height);
+
       return [
         [centerX + offsetX1, centerY + offsetY1],
         [centerX + offsetX2, centerY + offsetY2]
@@ -88,25 +96,23 @@ function App() {
       index: tree.root,
       centerX: width / 2,
       centerY: NODE_SIZE,
-      lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.root].leftTreeSize * (20 / 100))),
-      lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.root].rightTreeSize * (20 / 100))),
-      leftAngle: ANGLE + (ANGLE * (tree.arr[tree.root]).leftTreeSize * (15 / 100)),
-      rightAngle: ANGLE + (ANGLE * (tree.arr[tree.root]).rightTreeSize * (15 / 100)),
     }];
 
     context.clearRect(0, 0, width, height);
     while (queue.length > 0) {
       const curr = queue.shift()!;
-      const [right, left] = draw(curr.centerX, curr.centerY, curr.leftAngle, curr.rightAngle, curr.lengthLeft, curr.lengthRight, context);
+      const [right, left] = draw(curr.centerX, curr.centerY,
+        ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
+        ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
+        LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
+        LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
+        tree.arr[curr.index].val, context);
+
       if (tree.arr[curr.index].left !== -1) {
         queue.push({
           index: tree.arr[curr.index].left,
           centerX: left[0],
           centerY: left[1],
-          lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
-          lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
-          leftAngle: ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
-          rightAngle: ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
         });
       }
       if (tree.arr[curr.index].right !== -1) {
@@ -114,16 +120,11 @@ function App() {
           index: tree.arr[curr.index].right,
           centerX: right[0],
           centerY: right[1],
-          lengthLeft: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
-          lengthRight: LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
-          leftAngle: ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
-          rightAngle: ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
         });
       }
     }
 
     setDrawing(false);
-    () => context.clearRect(0, 0, width, height);
   }, [drawing])
 
   useEffect(() => {
@@ -171,7 +172,6 @@ function App() {
   return (
     <>
       <canvas width="1200" height="500" style={{ backgroundColor: "white" }} ref={ref}></canvas>
-      <div>{tree.arr.map((x, i) => (<div key={`${i}{x}`}>{x.val}</div>))}</div>
       <div>
         <Input name='add' handler={addVal} action_={action} treeLength={tree.arr.length} />
         <Input name='remove' handler={removeVal} action_={action} treeLength={tree.arr.length} />

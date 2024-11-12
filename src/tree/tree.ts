@@ -222,14 +222,14 @@ function adjustParentsTreeSize(bst: BST, index: number, mode: "add" | "remove") 
             }
         }
 
-        parent = bst.arr[parent].parent;
-        if (parent !== -1) {
-            if (bst.arr[parent].left === parent) {
+        if (bst.arr[parent].parent !== -1) {
+            if (bst.arr[bst.arr[parent].parent].left === parent) {
                 dir = "l";
             } else {
                 dir = "r";
             }
         }
+        parent = bst.arr[parent].parent;
 
     }
 }
