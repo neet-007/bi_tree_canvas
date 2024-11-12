@@ -50,6 +50,7 @@ export function insert(bst: BST, val: number) {
             right: -1,
             leftTreeSize: 0,
             rightTreeSize: 0,
+            depth: 0,
         } as Node);
         bst.root = 0;
 
@@ -68,7 +69,8 @@ export function insert(bst: BST, val: number) {
         left: -1,
         right: -1,
         leftTreeSize: 0,
-        rightTreeSize: 0
+        rightTreeSize: 0,
+        depth: bst.arr[parent].depth + 1,
     } as Node);
 
     adjustParentsTreeSize(bst, bst.arr.length - 1, "add");
@@ -127,6 +129,7 @@ export function remove(bst: BST, val: number) {
             bst.root = next;
         }
 
+        adjustDepth(bst, next, true);
         bst.arr.splice(index, 1);
         reAdjust(bst, index);
         return
@@ -135,13 +138,13 @@ export function remove(bst: BST, val: number) {
     next = successor(bst.arr, index);
     const nextNode = bst.arr[next];
 
-
     if (bst.arr[nextNode.parent].left === next) {
         bst.arr[nextNode.parent].left = nextNode.right;
     } else {
         bst.arr[nextNode.parent].right = nextNode.right;
     }
     if (nextNode.right !== -1) {
+        adjustDepth(bst, nextNode.right, true);
         bst.arr[nextNode.right].parent = nextNode.parent;
     }
 
@@ -172,6 +175,7 @@ export function remove(bst: BST, val: number) {
         bst.root = next;
     }
 
+    nextNode.depth = curr.depth;
     bst.arr.splice(index, 1);
     reAdjust(bst, index);
 }
@@ -231,6 +235,18 @@ function adjustParentsTreeSize(bst: BST, index: number, mode: "add" | "remove") 
         }
         parent = bst.arr[parent].parent;
 
+    }
+}
+
+function adjustDepth(bst: BST, index: number, oneChild: boolean) {
+    if (oneChild) {
+        bst.arr[index].depth = Math.max(bst.arr[index].depth - 1, 0);
+        if (bst.arr[index].left !== -1) {
+            adjustDepth(bst, bst.arr[index].left, oneChild);
+        }
+        if (bst.arr[index].right !== -1) {
+            adjustDepth(bst, bst.arr[index].right, oneChild);
+        }
     }
 }
 

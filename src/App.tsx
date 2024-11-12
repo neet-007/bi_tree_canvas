@@ -94,7 +94,6 @@ function App() {
       const height = (textHeight / 2) - (`${val}`.length) * 3;
       context.strokeText(`${val}`, centerX - width, centerY + height);
 
-      console.log("val", val, "offestx1", offsetX1, "offsety1", offsetX1, "offsetx2", offsetX2, "offsety2", offsetX2);
       return [
         [centerX + offsetX1, centerY + offsetY1],
         [centerX + offsetX2, centerY + offsetY2]
@@ -113,16 +112,12 @@ function App() {
       const curr = queue.shift()!;
 
       let leftAngle = ANGLE;
-      if (tree.arr[curr.index].left !== -1) {
-        if (tree.arr[tree.arr[curr.index].left].right !== -1) {
-          leftAngle *= 2.7;
-        }
+      if (tree.arr[curr.index].left !== -1 && tree.arr[tree.arr[curr.index].left].right !== -1) {
+        leftAngle *= 2.7;
       }
       let rightAngle = ANGLE;
-      if (tree.arr[curr.index].right !== -1) {
-        if (tree.arr[tree.arr[curr.index].right].left !== -1) {
-          rightAngle *= 2.7;
-        }
+      if (tree.arr[curr.index].right !== -1 && tree.arr[tree.arr[curr.index].right].left !== -1) {
+        rightAngle *= 2.7;
       }
 
       let leftLength = -1;
@@ -139,7 +134,7 @@ function App() {
         rightAngle,
         leftLength,
         rightLength,
-        tree.arr[curr.index].val, context);
+        tree.arr[curr.index].depth, context);
 
       if (tree.arr[curr.index].left !== -1) {
         queue.push({
@@ -202,6 +197,8 @@ function App() {
     setAction("remove");
     setVal(val);
   }
+
+  console.log(tree.arr);
   return (
     <>
       <canvas width="1200" height="500" style={{ backgroundColor: "white" }} ref={ref}></canvas>
