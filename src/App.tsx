@@ -34,7 +34,7 @@ const Input: React.FC<ComponentProps<"form"> & InputProps> = ({ name, handler, a
 
 const NODE_SIZE = 15;
 const ANGLE = 30 * (Math.PI / 180);
-const LINE_HYPOTENUSE = 50;
+const LINE_HYPOTENUSE = 90;
 
 function App() {
   const [tree, setTree] = useState<BST>({ arr: [], root: -1 } as BST)
@@ -57,27 +57,35 @@ function App() {
     }
 
     function draw(centerX: number, centerY: number, leftAngle: number, rightAngle: number, lengthLeft: number, lengthRight: number, val: number, context: CanvasRenderingContext2D): [number[], number[]] {
+      let offsetX1 = 0;
+      let offsetY1 = 0;
+      let offsetX2 = 0;
+      let offsetY2 = 0
+      if (lengthRight !== -1) {
+        offsetX1 = lengthRight * Math.sin(rightAngle);
+        offsetY1 = lengthRight * Math.cos(rightAngle);
+
+        const path1 = new Path2D();
+        path1.moveTo(centerX, centerY);
+        path1.lineTo(centerX + offsetX1, centerY + offsetY1);
+        context.stroke(path1);
+      }
+
+      if (lengthLeft !== -1) {
+        offsetX2 = lengthLeft * Math.sin(-leftAngle);
+        offsetY2 = lengthLeft * Math.cos(-leftAngle);
+
+        const path2 = new Path2D();
+        path2.moveTo(centerX, centerY);
+        path2.lineTo(centerX + offsetX2, centerY + offsetY2);
+        context.stroke(path2);
+      }
+
       context.beginPath();
       context.arc(centerX, centerY, NODE_SIZE, 0, 2 * Math.PI);
       context.fillStyle = "white";
       context.fill();
       context.stroke();
-
-      const offsetX1 = lengthRight * Math.sin(rightAngle);
-      const offsetY1 = lengthRight * Math.cos(rightAngle);
-
-      const offsetX2 = lengthLeft * Math.sin(-leftAngle);
-      const offsetY2 = lengthLeft * Math.cos(-leftAngle);
-
-      const path1 = new Path2D();
-      path1.moveTo(centerX, centerY);
-      path1.lineTo(centerX + offsetX1, centerY + offsetY1);
-      context.stroke(path1);
-
-      const path2 = new Path2D();
-      path2.moveTo(centerX, centerY);
-      path2.lineTo(centerX + offsetX2, centerY + offsetY2);
-      context.stroke(path2);
 
       context.font = "20px serif";
       const metrics = context.measureText("1");
@@ -86,6 +94,7 @@ function App() {
       const height = (textHeight / 2) - (`${val}`.length) * 3;
       context.strokeText(`${val}`, centerX - width, centerY + height);
 
+      console.log("val", val, "offestx1", offsetX1, "offsety1", offsetX1, "offsetx2", offsetX2, "offsety2", offsetX2);
       return [
         [centerX + offsetX1, centerY + offsetY1],
         [centerX + offsetX2, centerY + offsetY2]
@@ -99,13 +108,37 @@ function App() {
     }];
 
     context.clearRect(0, 0, width, height);
+
     while (queue.length > 0) {
       const curr = queue.shift()!;
+
+      let leftAngle = ANGLE;
+      if (tree.arr[curr.index].left !== -1) {
+        if (tree.arr[tree.arr[curr.index].left].right !== -1) {
+          leftAngle *= 2.7;
+        }
+      }
+      let rightAngle = ANGLE;
+      if (tree.arr[curr.index].right !== -1) {
+        if (tree.arr[tree.arr[curr.index].right].left !== -1) {
+          rightAngle *= 2.7;
+        }
+      }
+
+      let leftLength = -1;
+      if (tree.arr[curr.index].left !== -1) {
+        leftLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.arr[curr.index].left].rightTreeSize * (20 / 100)));
+      }
+      let rightLength = -1;
+      if (tree.arr[curr.index].right !== -1) {
+        rightLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.arr[curr.index].right].leftTreeSize * (20 / 100)));
+      }
+
       const [right, left] = draw(curr.centerX, curr.centerY,
-        ANGLE + (ANGLE * (tree.arr[curr.index].leftTreeSize * (15 / 100))),
-        ANGLE + (ANGLE * (tree.arr[curr.index].rightTreeSize * (15 / 100))),
-        LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].leftTreeSize * (20 / 100))),
-        LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[curr.index].rightTreeSize * (20 / 100))),
+        leftAngle,
+        rightAngle,
+        leftLength,
+        rightLength,
         tree.arr[curr.index].val, context);
 
       if (tree.arr[curr.index].left !== -1) {
