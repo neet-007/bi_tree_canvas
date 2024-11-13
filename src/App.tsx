@@ -101,6 +101,7 @@ function App() {
     }
 
     const queue = [{
+      val: tree.arr[tree.root].val,
       index: tree.root,
       centerX: width / 2,
       centerY: NODE_SIZE,
@@ -122,11 +123,11 @@ function App() {
 
       let leftLength = -1;
       if (tree.arr[curr.index].left !== -1) {
-        leftLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.arr[curr.index].left].rightTreeSize * (20 / 100)));
+        leftLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * ((1 / (tree.arr[curr.index].depth + 1)) * (tree.arr[tree.arr[curr.index].left].rightTreeSize * (50 / 100))));
       }
       let rightLength = -1;
       if (tree.arr[curr.index].right !== -1) {
-        rightLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * (tree.arr[tree.arr[curr.index].right].leftTreeSize * (20 / 100)));
+        rightLength = LINE_HYPOTENUSE + (LINE_HYPOTENUSE * ((1 / (tree.arr[curr.index].depth + 1)) * (tree.arr[tree.arr[curr.index].right].leftTreeSize * (50 / 100))));
       }
 
       const [right, left] = draw(curr.centerX, curr.centerY,
@@ -134,10 +135,11 @@ function App() {
         rightAngle,
         leftLength,
         rightLength,
-        tree.arr[curr.index].depth, context);
+        curr.val, context);
 
       if (tree.arr[curr.index].left !== -1) {
         queue.push({
+          val: tree.arr[tree.arr[curr.index].left].val,
           index: tree.arr[curr.index].left,
           centerX: left[0],
           centerY: left[1],
@@ -145,6 +147,7 @@ function App() {
       }
       if (tree.arr[curr.index].right !== -1) {
         queue.push({
+          val: tree.arr[tree.arr[curr.index].right].val,
           index: tree.arr[curr.index].right,
           centerX: right[0],
           centerY: right[1],
@@ -198,7 +201,6 @@ function App() {
     setVal(val);
   }
 
-  console.log(tree.arr);
   return (
     <>
       <canvas width="1200" height="500" style={{ backgroundColor: "white" }} ref={ref}></canvas>

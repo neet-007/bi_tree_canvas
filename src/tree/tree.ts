@@ -87,11 +87,11 @@ export function remove(bst: BST, val: number) {
     if (curr.left === -1 && curr.right === -1) {
         if (curr.parent !== -1) {
             if (bst.arr[curr.parent].left === index) {
+                adjustParentsTreeSize(bst, index, "remove");
                 bst.arr[curr.parent].left = -1;
-                adjustParentsTreeSize(bst, index, "remove");
             } else {
-                bst.arr[curr.parent].right = -1;
                 adjustParentsTreeSize(bst, index, "remove");
+                bst.arr[curr.parent].right = -1;
             }
         }
 
@@ -103,6 +103,7 @@ export function remove(bst: BST, val: number) {
         reAdjust(bst, index);
         return
     }
+
     let next = -1;
     if (curr.left !== -1 && curr.right === -1) {
         next = curr.left;
@@ -114,11 +115,11 @@ export function remove(bst: BST, val: number) {
         bst.arr[next].parent = curr.parent;
         if (curr.parent !== -1) {
             if (bst.arr[curr.parent].left === index) {
+                adjustParentsTreeSize(bst, index, "remove");
                 bst.arr[curr.parent].left = next;
-                adjustParentsTreeSize(bst, index, "remove");
             } else {
-                bst.arr[curr.parent].right = next;
                 adjustParentsTreeSize(bst, index, "remove");
+                bst.arr[curr.parent].right = next;
             }
         } else {
             bst.arr[next].leftTreeSize = curr.leftTreeSize;
@@ -137,6 +138,7 @@ export function remove(bst: BST, val: number) {
 
     next = successor(bst.arr, index);
     const nextNode = bst.arr[next];
+    adjustParentsTreeSize(bst, next, "remove");
 
     if (bst.arr[nextNode.parent].left === next) {
         bst.arr[nextNode.parent].left = nextNode.right;
@@ -152,15 +154,13 @@ export function remove(bst: BST, val: number) {
     if (curr.parent !== -1) {
         if (bst.arr[curr.parent].left == index) {
             bst.arr[curr.parent].left = next;
-            adjustParentsTreeSize(bst, index, "remove");
         } else {
             bst.arr[curr.parent].right = next;
-            adjustParentsTreeSize(bst, index, "remove");
         }
     } else {
         bst.arr[next].leftTreeSize = curr.leftTreeSize;
-        bst.arr[next].rightTreeSize = --curr.rightTreeSize;
     }
+
     nextNode.left = curr.left;
     if (curr.left !== -1) {
         bst.arr[curr.left].parent = next;
@@ -176,6 +176,8 @@ export function remove(bst: BST, val: number) {
     }
 
     nextNode.depth = curr.depth;
+    nextNode.leftTreeSize = curr.leftTreeSize;
+    nextNode.rightTreeSize = curr.rightTreeSize;
     bst.arr.splice(index, 1);
     reAdjust(bst, index);
 }
