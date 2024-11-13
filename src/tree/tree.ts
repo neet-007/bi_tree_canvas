@@ -35,10 +35,12 @@ export function insert(bst: BST, val: number) {
     while (curr !== -1) {
         if (bst.arr[curr].val > val) {
             parent = curr;
+            bst.arr[curr].next = bst.arr[curr].left;
             curr = bst.arr[curr].left
             continue
         }
         parent = curr;
+        bst.arr[curr].next = bst.arr[curr].right;
         curr = bst.arr[curr].right;
     }
 
@@ -51,6 +53,7 @@ export function insert(bst: BST, val: number) {
             leftTreeSize: 0,
             rightTreeSize: 0,
             depth: 0,
+            next: -1,
         } as Node);
         bst.root = 0;
 
@@ -71,6 +74,7 @@ export function insert(bst: BST, val: number) {
         leftTreeSize: 0,
         rightTreeSize: 0,
         depth: bst.arr[parent].depth + 1,
+        next: -1,
     } as Node);
 
     adjustParentsTreeSize(bst, bst.arr.length - 1, "add");
@@ -266,6 +270,17 @@ function reAdjust(bst: BST, index: number) {
     }
     if (bst.root >= index) {
         bst.root -= 1;
+    }
+}
+
+export function cleanNext(bst: BST) {
+    let next = bst.root;
+    let curr = bst.root;
+
+    while (curr !== -1) {
+        next = bst.arr[curr].next;
+        bst.arr[curr].next = -1;
+        curr = bst.arr[curr].next;
     }
 }
 

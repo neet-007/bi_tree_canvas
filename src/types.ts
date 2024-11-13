@@ -6,6 +6,7 @@ export type Node = {
   leftTreeSize: number;
   rightTreeSize: number;
   depth: number;
+  next: number;
   // needs more fields
 }
 
