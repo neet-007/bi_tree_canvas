@@ -15,32 +15,20 @@ export function draw(centerX: number, centerY: number, leftAngle: number, rightA
     offsetX1 = lengthRight * Math.sin(rightAngle);
     offsetY1 = lengthRight * Math.cos(rightAngle);
 
-    let leftLine = {
-        x: -1,
-        y: -1
-    }
     if (drawLeft) {
         const path1 = new Path2D();
         path1.moveTo(centerX, centerY);
-        leftLine.x = centerX + offsetX1;
-        leftLine.y = centerY + offsetY1;
-        path1.lineTo(leftLine.x, leftLine.y);
+        path1.lineTo(centerX + offsetX1, centerY + offsetY1);
         context.stroke(path1);
     }
 
     offsetX2 = lengthLeft * Math.sin(-leftAngle);
     offsetY2 = lengthLeft * Math.cos(-leftAngle);
 
-    let rightLine = {
-        x: -1,
-        y: -1
-    }
     if (drawRight) {
         const path2 = new Path2D();
-        rightLine.x = centerX + offsetX2;
-        rightLine.y = centerY + offsetY2;
         path2.moveTo(centerX, centerY);
-        path2.lineTo(rightLine.x, rightLine.y);
+        path2.lineTo(centerX + offsetX2, centerY + offsetY2);
         context.stroke(path2);
     }
 
@@ -112,36 +100,6 @@ function animateCirclePop(
     requestAnimationFrame(animate);
 }
 
-export function animateCircle(
-    centerX: number,
-    centerY: number,
-    initialAngle: number,
-    speed: number,
-    context: CanvasRenderingContext2D,
-    onComplete: () => void,
-) {
-    function drawPartialCircle(currentAngle: number) {
-        context.save();
-
-        const path = new Path2D();
-        path.arc(centerX, centerY, NODE_SIZE, 0, currentAngle);
-        context.strokeStyle = 'blue';
-        context.lineWidth = 2;
-        context.stroke(path);
-
-        currentAngle += speed;
-        context.restore();
-
-        if (currentAngle <= 2 * Math.PI) {
-            requestAnimationFrame(() => drawPartialCircle(currentAngle));
-        } else {
-            onComplete();
-        }
-    }
-
-    drawPartialCircle(initialAngle);
-}
-
 function animateLine(
     startX: number,
     startY: number,
@@ -149,38 +107,96 @@ function animateLine(
     angle: number,
     progress: number,
     speed: number,
+    dir: "l" | "r",
     context: CanvasRenderingContext2D,
     onComplete: () => void,
 ) {
-    const path = new Path2D();
-    path.moveTo(startX, startY);
+    let endX = -1;
+    let endY = -1;
+    if (dir === "l") {
+        endX = startX + length * Math.sin(-angle);
+        endY = startY + length * Math.cos(-angle);
+    } else {
+        endX = startX + length * Math.sin(angle);
+        endY = startY + length * Math.cos(angle);
+    }
 
-    function drawPartialCircle(x: number, y: number) {
+    const canvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    function drawPartialLine() {
         context.save();
 
-        let offsetX1 = 0;
-        let offsetY1 = 0;
-        if (length !== -1) {
-            offsetX1 = length * Math.sin(angle);
-            offsetY1 = length * Math.cos(angle);
+        const currentX = startX + (endX - startX) * progress;
+        const currentY = startY + (endY - startY) * progress;
+
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(currentX, currentY);
+        context.strokeStyle = 'blue';
+        context.lineWidth = 2;
+        context.stroke();
+
+        context.restore();
+        progress += speed;
+
+        if (progress <= 1) {
+            requestAnimationFrame(drawPartialLine);
+        } else {
+            context.putImageData(canvas, 0, 0);
+            onComplete();
+        }
+    }
+
+    drawPartialLine();
+}
+
+function animateLineCurve(
+    centerX: number,
+    centerY: number,
+    startAngle: number,
+    finalAngle: number,
+    speed: number,
+    dir: "l" | "r",
+    context: CanvasRenderingContext2D,
+    onComplete: () => void,
+) {
+    const canvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    function drawPartialLine(angle: number) {
+        context.putImageData(canvas, 0, 0);
+
+        let currentX = -1;
+        let currentY = -1;
+        if (dir === "l") {
+            console.log("l", dir);
+            currentX = centerX + (LINE_HYPOTENUSE * Math.sin(-angle));
+            currentY = centerY + (LINE_HYPOTENUSE * Math.cos(-angle));
+        } else {
+            console.log("r", dir);
+            currentX = centerX + (LINE_HYPOTENUSE * Math.sin(angle));
+            currentY = centerY + (LINE_HYPOTENUSE * Math.cos(angle));
         }
 
-        path.lineTo(startX + (length + offsetX1) * progress, startY + (length + offsetY1) * progress);
+        const path = new Path2D();
+        path.moveTo(centerX, centerY);
+        path.lineTo(currentX, currentY);
         context.strokeStyle = 'blue';
         context.lineWidth = 2;
         context.stroke(path);
 
-        progress += speed;
-        context.restore();
+        context.beginPath();
+        context.arc(currentX, currentY, NODE_SIZE, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
 
-        if (progress <= 1) {
-            requestAnimationFrame(() => drawPartialCircle(x, y));
+        angle -= speed;
+
+        if (angle >= finalAngle) {
+            requestAnimationFrame(() => drawPartialLine(angle));
         } else {
             onComplete();
         }
     }
 
-    drawPartialCircle(startX, startY);
+    drawPartialLine(startAngle);
 }
 
 export function drawTree(root: number, width: number, height: number, arr: Node[], context: CanvasRenderingContext2D): [any[], {
@@ -204,6 +220,7 @@ export function drawTree(root: number, width: number, height: number, arr: Node[
         centerY: -1,
         prevCenterX: -1,
         prevCenterY: -1,
+        dir: "l",
     };
     context.clearRect(0, 0, width, height);
     let next = 0;
@@ -250,7 +267,8 @@ export function drawTree(root: number, width: number, height: number, arr: Node[
                     centerX: left[0] - 50,
                     centerY: left[1] - 50,
                     prevCenterX: curr.centerX,
-                    prevCenterY: curr.centerY
+                    prevCenterY: curr.centerY,
+                    dir: "l",
                 };
             } else {
                 queue.push({
@@ -269,7 +287,8 @@ export function drawTree(root: number, width: number, height: number, arr: Node[
                     centerX: right[0] + 50,
                     centerY: right[1] - 50,
                     prevCenterX: curr.centerX,
-                    prevCenterY: curr.centerY
+                    prevCenterY: curr.centerY,
+                    dir: "r",
                 };
             } else {
                 queue.push({
@@ -298,32 +317,22 @@ export function drawTree(root: number, width: number, height: number, arr: Node[
     return [animateArr, newAdded]
 }
 
-export function startAnimations(newAdded: { val: number; index: number; centerX: number; centerY: number, prevCenterX: number, prevCenterY: number },
+export function startAnimations(newAdded: { val: number; index: number; centerX: number; centerY: number, prevCenterX: number, prevCenterY: number, dir: "l" | "r" },
     animations: any[], context: CanvasRenderingContext2D) {
     let currentIndex = 0;
 
     function nextAnimation() {
         if (currentIndex < animations.length) {
             const { centerX, centerY, speed, leftAngle, rightAngle, leftLength, rightLength, } = animations[currentIndex];
-
-            /*
-            animateCircle(centerX, centerY, 0, speed, context!, () => {
-                currentIndex++;
-                animateLine(centerX, centerY, leftLength, leftAngle, 0, 0.1, context, () => { });
-                animateLine(centerX, centerY, rightLength, rightAngle, 0, 0.1, context, () => { });
-                nextAnimation();
-            });
-            */
             animateCirclePop(centerX, centerY, performance.now(), 2000, 1.5, NODE_SIZE, context, () => {
                 currentIndex++;
                 nextAnimation();
             });
         } else if (newAdded.val !== -1) {
             animateCirclePop(newAdded.centerX, newAdded.centerY, performance.now(), 2000, 1.5, NODE_SIZE, context, () => {
-                const path = new Path2D();
-                path.moveTo(newAdded.prevCenterX, newAdded.prevCenterY);
-                path.lineTo(newAdded.centerX, newAdded.centerY);
-                context.stroke(path);
+                animateLine(newAdded.prevCenterX, newAdded.prevCenterY, LINE_HYPOTENUSE, ANGLE * 2.7, 0, 0.01, newAdded.dir, context, () => {
+                    animateLineCurve(newAdded.prevCenterX, newAdded.prevCenterY, ANGLE * 2.7, ANGLE, 0.01, newAdded.dir, context, () => { });
+                })
             });
         }
     }
