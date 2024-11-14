@@ -47,13 +47,13 @@ function App() {
 
     const width = ref.current.width;
     const height = ref.current.height;
-    const context = ref.current.getContext("2d");
+    const context = ref.current.getContext("2d", { willReadFrequently: true });
     if (!context || !drawing) {
       return;
     }
 
-    const animationArr = drawTree(tree.root, width, height, tree.arr, context);
-    startAnimations(animationArr, context);
+    const [animationArr, newAdded] = drawTree(tree.root, width, height, tree.arr, context);
+    startAnimations(newAdded, animationArr, context);
 
     setDrawing(false);
   }, [drawing])
@@ -100,8 +100,6 @@ function App() {
     setAction("remove");
     setVal(val);
   }
-
-  console.log(tree.arr);
 
   return (
     <>
